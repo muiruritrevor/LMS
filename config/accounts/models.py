@@ -4,7 +4,7 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 # custom manager class that handle user creation
 class UserManager(BaseUserManager):
     # Method to create a new user(regular user)
-    def create_user(self, email, first_name, last_name, username, password=None):
+    def create_user(self, email, first_name, last_name, username, password):
         # Ensure email is provided
         if not email:
             raise ValueError('Enter email address')
@@ -44,12 +44,8 @@ class UserManager(BaseUserManager):
 
 # A custom user model that extends AbstractUser to add custom fields and behavior
 class User(AbstractUser):
-    # Additional fields
-    first_name = models.CharField(max_length=255)
-    last_name = models.CharField(max_length=255)
     email = models.EmailField(unique=True, max_length=255) 
-    username = models.CharField(max_length=255, unique=True)
-    date_of_membership = models.DateField(auto_now_add=True)
+    date_of_membership = models.DateField(auto_now_add=True, null=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
@@ -67,9 +63,9 @@ class User(AbstractUser):
         return self.email
 
 # Profile model linked to the custom user model
-class profile(models.Model):
+class Profile(models.Model):
     # Foreign key linking profile to user
-    user=models.OneToOneField(User, on_delete=models.CASCADE)
+    user=models.OneToOneField(User, on_delete=models.CASCADE,null=True, blank=True)
     profile_pic = models.URLField(blank=True)
     bio = models.TextField(blank=True)
 
