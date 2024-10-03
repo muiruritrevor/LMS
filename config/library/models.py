@@ -47,10 +47,12 @@ class Book(models.Model):
         return f"{self.title} by {self.author}"
 
     def clean(self):
+        """Validate the book's data ensuring that available copies do not exceed total copies."""
         if self.available_copies > self.total_copies:
             raise ValidationError("Available copies cannot exceed total copies")
 
     def save(self, *args, **kwargs):
+        """Validate the book's data and update the book's status."""
         self.full_clean()
         self.update_status()
         super().save(*args, **kwargs)
@@ -70,21 +72,25 @@ class Book(models.Model):
     def checkout(self, user):
         """
         Attempt to checkout the book to a user.
-        
+    
         Returns:
-            Transaction or None: The created transaction if successful, None if unavailable
+            Transaction or None: The created transaction if successful, raises ValueError if the book is unavailable.
         """
+        # Check if the book is available using the `is_available` property
         if not self.is_available:
-            return None
-        
+            raise ValueError("Book is not available for checkout")
+    
+        # Decrement available copies and save the book
         self.available_copies -= 1
         self.save()
-        
+    
+        # Create a new transaction for checking out the book
         return Transaction.objects.create(
             user=user,
             book=self,
             transaction_type=Transaction.TransactionType.CHECK_OUT
         )
+
 
     def return_book(self, user):
         """
@@ -99,7 +105,7 @@ class Book(models.Model):
         ).first()
         
         if not transaction:
-            return None
+            raise ValueError("No active transaction found for this book and user")
         
         self.available_copies += 1
         self.save()
@@ -123,7 +129,8 @@ class Transaction(models.Model):
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
     transaction_type = models.CharField(
         max_length=2,
-        choices=TransactionType.choices
+        choices=TransactionType.choices,
+        default=TransactionType.CHECK_OUT
     )
     checkout_date = models.DateField(auto_now_add=True)
     due_date = models.DateField()
