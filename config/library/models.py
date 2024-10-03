@@ -2,20 +2,19 @@ from django.db import models
 from accounts.models import User
 from datetime import timedelta, date
 
-# Book Model
+
 class Book(models.Model):
     """
-    Book model for storing book information.
+    Represents a book in the library system.
 
-    :Attr title: The title of the book
-    :Attr author: The author of the book
-    :Attr ISNB: The unique ISBN number of the book
-    :Attr published_date: The published date of the book
-    :Attr total_copies: The total number of copies
-    :Attr available_copies: The number of available copies
-    :Attr status: The availability status of the book
-
-
+    Attributes:
+        title (str): The title of the book (max 255 characters)
+        author (str): The author's name (max 255 characters)
+        isbn (str): Unique 13-digit ISBN identifier
+        publish_date (date): The book's publication date
+        total_copies (int): Total number of copies owned by the library
+        available_copies (int): Current number of copies available for checkout
+        status (str): Current availability status of the book
     """
 
     STATUS_CHOICES = [
