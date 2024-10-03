@@ -1,6 +1,5 @@
-from django.shortcuts import render
+from django.contrib.auth.views import LoginView
 
-# Create your views here.
 
-def signup(request):
-    return render(request, ',accounts/signup.html')
+class CustomLoginView(LoginView):
+    template_name = "accounts/signup.html"
