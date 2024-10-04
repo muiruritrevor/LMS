@@ -87,6 +87,7 @@ class CheckoutBookView(generics.CreateAPIView):
         It creates a new transaction if the book is available.
         """
         book_id = request.data.get('book')
+        print(f"Received book ID: {book_id}")
         try:
             book = Book.objects.get(id=book_id)
             transaction = book.checkout(request.user)
