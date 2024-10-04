@@ -110,7 +110,8 @@ class Book(models.Model):
         self.available_copies += 1
         self.save()
         
-        transaction.return_book()
+        transaction.return_date = timezone.now()
+        transaction.save()
         return transaction
 
 
