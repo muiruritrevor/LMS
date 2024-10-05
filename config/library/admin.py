@@ -46,23 +46,19 @@ class TransactionAdmin(admin.ModelAdmin):
     Customizes the admin interface for the Transaction model.
     Configures display options, filtering, searching, and layout of the transaction management interface.
     """
-    # Configure which fields appear in the transactions list
-    list_display = ('user', 'book', 'checkout_date', 'due_date', 'return_date', 'is_overdue')
+    list_display = [
+        'user', 'book', 'checkout_date', 'due_date', 
+        'return_date',  'penalty_amount', 'penalty_paid'
+    ]
+    list_filter = ['penalty_paid', 'transaction_type']
+    search_fields = ['user__username', 'book__title']
     
-    # Add filter sidebar for refining transaction list by dates
-    list_filter = ('due_date', 'return_date')
+    readonly_fields = ['penalty_amount', 'penalty_paid']
     
-    # Enable search functionality for user and book
-    search_fields = ('user__username', 'book__title')  # Allows searching related User and Book models
+    actions = ['mark_penalties_paid']
     
-    # Organize transaction fields into logical sections
-    fieldsets = (
-        # Main transaction information
-        (None, {
-            'fields': ('user', 'book')
-        }),
-        # Date information section
-        ('Dates', {
-            'fields': ('checkout_date', 'due_date', 'return_date')
-        }),
-    )
+    def mark_penalties_paid(self, request, queryset):
+        updated = queryset.filter(penalty_amount__gt=0).update(penalty_paid=True)
+        self.message_user(request, f'{updated} penalties marked as paid.')
+    mark_penalties_paid.short_description = "Mark selected penalties as paid"
+

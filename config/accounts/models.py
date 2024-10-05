@@ -72,7 +72,7 @@ class User(AbstractUser):
     
     def can_borrow_books(self):
         """Check if user can borrow books based on unpaid penalties."""
-        MAX_UNPAID_PENALTIES = Decimal('50.00')
+        MAX_UNPAID_PENALTIES = Decimal('60.00')
         return self.total_penalties < MAX_UNPAID_PENALTIES
 
 # Profile model linked to the custom user model

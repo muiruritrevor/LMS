@@ -16,6 +16,7 @@ router.register(r'transactions', TransactionViewSet)
 router.register(r'users', UserViewSet)
 router.register(r'profiles', ProfileViewSet)
 
+
 urlpatterns = [
     path('', include(router.urls)),
     path('checkout/', CheckoutBookView.as_view(), name='checkout-book'),

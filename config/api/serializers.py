@@ -38,7 +38,7 @@ class BookSerializer(serializers.ModelSerializer):
         """
 
         if len(value) not in [13]:
-            raise serializers.ValidationError("ISBN must 13 characters")
+            raise serializers.ValidationError("ISBN must be13 characters")
         return value
     
     def validate(self, data):
@@ -70,25 +70,22 @@ class TransactionSerializer(serializers.ModelSerializer):
     Handles the serialization and deserialization of Transaction objects,
     including the relationship between users and books.
     """
-    
-    # Add a read-only field to display the book title
+    days_overdue = serializers.IntegerField(read_only=True)
+    penalty_amount = serializers.DecimalField(
+        max_digits=5, 
+        decimal_places=2, 
+        read_only=True
+    )
     book_title = serializers.CharField(source='book.title', read_only=True)
-    # Add a read-only field to display the username
-    username = serializers.CharField(source='user.username', read_only=True)
     
     class Meta:
         model = Transaction
         fields = [
-            "id",
-            "user",
-            "username",
-            "book",
-            "book_title",
-            "checkout_date",
-            "return_date",
-            "is_overdue"
+            'id', 'book_title', 'checkout_date', 'due_date', 
+            'return_date', 'days_overdue', 'penalty_amount', 
+            'penalty_paid'
         ]
-        read_only_fields = ['checkout_date', 'is_overdue']
+        read_only_fields = ['penalty_amount','penalty_paid', 'days_overdue']
         
     def validate(self, data):
         """
@@ -110,7 +107,7 @@ class TransactionSerializer(serializers.ModelSerializer):
         book = data.get('book')
         user = data.get('user')
         
-        if book and not book.is_available:
+        if book and not book.is_available: 
             raise serializers.ValidationError("This book is not available")
             
         if user and Transaction.objects.filter(
@@ -122,6 +119,12 @@ class TransactionSerializer(serializers.ModelSerializer):
             )
             
         return data
+
+class PenaltyPaymentSerializer(serializers.Serializer):
+    payment_method = serializers.ChoiceField(
+        choices=['credit_card', 'debit_card', 'M-pesa'],
+        required=True
+    )
 
 
 class UserSerializer(serializers.ModelSerializer):

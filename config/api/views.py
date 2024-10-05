@@ -38,6 +38,57 @@ class TransactionViewSet(viewsets.ModelViewSet):
     serializer_class = TransactionSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        return Transaction.objects.filter(user=self.request.user)
+
+    @action(detail=True, methods=['post'])
+    def pay_penalty(self, request, pk=None):
+        """Endpoint to pay penalty for a specific transaction."""
+        transaction = self.get_object()
+        serializer = PenaltyPaymentSerializer(data=request.data)
+        
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        if transaction.penalty_paid:
+            return Response(
+                {"error": "Penalty already paid"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if transaction.penalty_amount <= 0:
+            return Response(
+                {"error": "No penalty to pay"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+
+        success = transaction.pay_penalty()
+        
+        if success:
+            return Response({"status": "Penalty paid successfully"})
+        return Response(
+            {"error": "Failed to process payment"}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    @action(detail=False, methods=['get'])
+    def unpaid_penalties(self, request):
+        """Get all unpaid penalties for the current user."""
+        penalties = self.get_queryset().filter(
+            penalty_paid=False,
+            penalty_amount__gt=0
+        )
+        total_amount = penalties.aggregate(
+            total=Sum('penalty_amount')
+        )['total'] or 0
+        
+        serializer = self.get_serializer(penalties, many=True)
+        return Response({
+            'penalties': serializer.data,
+            'total_amount': total_amount
+        })
+
 class UserViewSet(viewsets.ModelViewSet):
     """
     ViewSet for handling CRUD operations on User model.
@@ -87,7 +138,7 @@ class CheckoutBookView(generics.CreateAPIView):
         It creates a new transaction if the book is available.
         """
         book_id = request.data.get('book')
-        print(f"Received book ID: {book_id}")
+        
         try:
             book = Book.objects.get(id=book_id)
             transaction = book.checkout(request.user)
