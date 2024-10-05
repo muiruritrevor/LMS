@@ -151,7 +151,7 @@ class Transaction(models.Model):
         default=TransactionType.CHECK_OUT
     )
     checkout_date = models.DateField(auto_now_add=True)
-    due_date = models.DateField()
+    due_date = models.DateField(null=True, blank=True)
     return_date = models.DateField(null=True, blank=True)
 
     # penalty fields
