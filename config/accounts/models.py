@@ -61,6 +61,19 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+    
+    @property
+    def total_penalties(self):
+        """Calculate total unpaid penalties for the user."""
+        return sum(
+            transaction.penalty_amount 
+            for transaction in self.transaction_set.filter(penalty_paid=False)
+        )
+    
+    def can_borrow_books(self):
+        """Check if user can borrow books based on unpaid penalties."""
+        MAX_UNPAID_PENALTIES = Decimal('50.00')
+        return self.total_penalties < MAX_UNPAID_PENALTIES
 
 # Profile model linked to the custom user model
 class Profile(models.Model):
