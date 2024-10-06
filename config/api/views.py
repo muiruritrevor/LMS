@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from .serializers import BookSerializer, TransactionSerializer, UserSerializer, ProfileSerializer , PenaltyPaymentSerializer
 from library.models import Book, Transaction
 from accounts.models import User, Profile
+from decimal import Decimal
 
 class BookViewSet(viewsets.ModelViewSet):
     """
