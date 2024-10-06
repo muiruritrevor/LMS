@@ -137,6 +137,10 @@ class CheckoutBookView(generics.CreateAPIView):
         This method attempts to checkout a book for the authenticated user.
         It creates a new transaction if the book is available.
         """
+
+        all_books = Book.objects.values_list('id', flat=True)
+        print("Available book IDs:", list(all_books))  # This line logs available IDs
+        
         book_id = request.data.get('book')
         
         try:
