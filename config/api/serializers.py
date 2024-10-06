@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from library.models import Book, Transaction
 from accounts.models import User, Profile
-
+from decimal import Decimal
 
 class BookSerializer(serializers.ModelSerializer):
     """
