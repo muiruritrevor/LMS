@@ -2,7 +2,7 @@ from rest_framework import viewsets, generics, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .serializers import BookSerializer, TransactionSerializer, UserSerializer, ProfileSerializer , PenaltySerializer
+from .serializers import BookSerializer, TransactionSerializer, UserSerializer, ProfileSerializer , PenaltyPaymentSerializer
 from library.models import Book, Transaction
 from accounts.models import User, Profile
 
