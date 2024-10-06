@@ -5,7 +5,6 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from .serializers import BookSerializer, TransactionSerializer, UserSerializer, ProfileSerializer , PenaltyPaymentSerializer
 from library.models import Book, Transaction
 from accounts.models import User, Profile
-from decimal import Decimal
 from django.db.models import Sum
 
 class BookViewSet(viewsets.ModelViewSet):
@@ -122,9 +121,6 @@ class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
     permission_classes = [IsAuthenticated]
-
-from rest_framework import generics, status
-from rest_framework.response import Response
 
 class CheckoutBookView(generics.CreateAPIView):
     serializer_class = TransactionSerializer
