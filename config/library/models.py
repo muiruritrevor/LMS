@@ -1,9 +1,10 @@
+from decimal import Decimal  # Ensure this import is present
 from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from accounts.models import User
 from datetime import timedelta
-from decimal import Decimal
+
 
 class Book(models.Model):
     """
@@ -29,7 +30,7 @@ class Book(models.Model):
     author = models.CharField(max_length=255)
     isbn = models.CharField(max_length=13, unique=True)
     publish_date = models.DateField()
-    genre = models.CharField(max_length=255, null=True)
+    genre = models.CharField(max_length=255, null=False, default="genre")
     total_copies = models.PositiveIntegerField()
     available_copies = models.PositiveIntegerField()
     status = models.CharField(
@@ -79,32 +80,35 @@ class Book(models.Model):
         Returns:
             Transaction or None: The created transaction if successful, raises ValueError if the book is unavailable.
         """
+        try:
+            if not user.can_borrow_books():
+                raise ValueError("cannot checkout book because of unpaid penalties")
 
-        if not user.can_borrow_books():
-            raise ValueError("cannot checkout book because of unpaid penalties")
-
-        # Check if the book is available using the `is_available` property
-        if not self.is_available:
-            raise ValueError("Book is not available for checkout")
+            # Check if the book is available using the `is_available` property
+            if not self.is_available:
+                raise ValueError("Book is not available for checkout")
     
-        # Decrement available copies and save the book
-        self.available_copies -= 1
-        self.save()
+            # Decrement available copies and save the book
+            self.available_copies -= 1
+            self.save()
     
-        # Create a new transaction for checking out the book
-        return Transaction.objects.create(
-            user=user,
-            book=self,
-            transaction_type=Transaction.TransactionType.CHECK_OUT
-        )
-
+            # Create a new transaction for checking out the book
+            return Transaction.objects.create(
+                user=user,
+                book=self,
+                transaction_type=Transaction.TransactionType.CHECK_OUT,
+                penalty_amount=Decimal('0.00')
+            )
+        except Exception as e:
+            print(f"Error in checkout method: {str(e)}")
+            raise
 
     def return_book(self, user):
         """
         Attempt to return the book from a user.
         
         Returns:
-            transaction or ValueError: The updated transaction if successful, VealueError if not found
+            transaction or ValueError: The updated transaction if successful, ValueError if not found
         """
         transaction = self.transaction_set.filter(
             user=user, 
@@ -135,9 +139,10 @@ class Transaction(models.Model):
     class TransactionType(models.TextChoices):
         CHECK_OUT = 'CO', 'Check Out'
         RETURN = 'RE', 'Return'
-    # constants
-    PENALTY_RATE = Decimal('2.00')
-    MAX_PENALTY = Decimal('40.00')
+    
+    # Constants
+    PENALTY_RATE = Decimal('1.00')
+    MAX_PENALTY = Decimal('60.00')
     LOAN_PERIOD_DAYS = 90
 
     # Relationship fields
@@ -154,11 +159,11 @@ class Transaction(models.Model):
     due_date = models.DateField(null=True, blank=True)
     return_date = models.DateField(null=True, blank=True)
 
-    # penalty fields
+    # Penalty fields
     penalty_amount = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default= Decimal('0.00'),
+        default=Decimal('0.00'),
     )
     
     penalty_paid = models.BooleanField(default=False)
@@ -182,13 +187,21 @@ class Transaction(models.Model):
         if self.return_date:
             return False
         return timezone.now().date() > self.due_date
+
+    @property
+    def days_overdue(self):
+        """Calculate the number of overdue days."""
+        if self.is_overdue:
+            return (timezone.now().date() - self.due_date).days
+        return 0
     
     def calculate_penalty(self):
         """Calculate the penalty amount based on days overdue."""
         if not self.is_overdue:
             return Decimal('0.00')
         
-        penalty = self.is_overdue * self.PENALTY_RATE
+        # Calculate the penalty amount
+        penalty = self.days_overdue * self.PENALTY_RATE
         return min(penalty, self.MAX_PENALTY)
     
     def apply_penalty(self):
