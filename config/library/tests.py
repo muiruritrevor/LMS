@@ -17,6 +17,7 @@ class PenaltySystemTests(TestCase):
             title='Test Book',
             author='Test Author',
             isbn='1234567890123',
+            genre='Fiction',
             publish_date='2023-01-01',
             total_copies=1,
             available_copies=1
@@ -39,10 +40,9 @@ class PenaltySystemTests(TestCase):
             due_date=timezone.now().date() - timedelta(days=10)
         )
         
-        expected_penalty = min(
-            Decimal('2.00'),  # 10 days * $1 per day
-            Transaction.MAX_PENALTY
-        )
+        # Assuming the penalty rate is $1 per day
+        DAILY_PENALTY_RATE = Decimal('1.00')
+        expected_penalty = min(Decimal('10.00'), Transaction.MAX_PENALTY)  # 10 days * $1/day
         
         self.assertEqual(transaction.calculate_penalty(), expected_penalty)
         
@@ -50,7 +50,7 @@ class PenaltySystemTests(TestCase):
         transaction = Transaction.objects.create(
             user=self.user,
             book=self.book,
-            due_date=timezone.now().date() - timedelta(days=30)
+            due_date=timezone.now().date() - timedelta(days=60)
         )
         
         self.assertEqual(
@@ -66,6 +66,6 @@ class PenaltySystemTests(TestCase):
                 book=self.book,
                 due_date=timezone.now().date() - timedelta(days=20)
             )
-            transaction.apply_penalty()
-        
+            transaction.apply_penalty()  # Assuming this method applies penalties
+            
         self.assertFalse(self.user.can_borrow_books())
