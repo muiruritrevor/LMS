@@ -2,7 +2,7 @@ from rest_framework import viewsets, generics, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .serializers import BookSerializer, TransactionSerializer, UserSerializer, ProfileSerializer
+from .serializers import BookSerializer, TransactionSerializer, UserSerializer, ProfileSerializer , PenaltySerializer
 from library.models import Book, Transaction
 from accounts.models import User, Profile
 
@@ -121,37 +121,41 @@ class ProfileViewSet(viewsets.ModelViewSet):
     serializer_class = ProfileSerializer
     permission_classes = [IsAuthenticated]
 
+from rest_framework import generics, status
+from rest_framework.response import Response
+
 class CheckoutBookView(generics.CreateAPIView):
-    """
-    View for handling book checkout process.
-    
-    This view creates a new transaction for checking out a book.
-    """
     serializer_class = TransactionSerializer
     permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
-        """
-        Handle POST requests to checkout a book.
-        
-        This method attempts to checkout a book for the authenticated user.
-        It creates a new transaction if the book is available.
-        """
-
-        all_books = Book.objects.values_list('id', flat=True)
-        print("Available book IDs:", list(all_books))  # This line logs available IDs
+        # Debug logging
+        print("Request data:", request.data)
+        print("User:", request.user)
         
         book_id = request.data.get('book')
+        print("Attempting to find book with ID:", book_id)
         
         try:
+            # Try to get the book and print its details
             book = Book.objects.get(id=book_id)
+            print("Found book:", book)
+            
             transaction = book.checkout(request.user)
             serializer = self.get_serializer(transaction)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Book.DoesNotExist:
-            return Response({"error": "Book not found"}, status=status.HTTP_404_NOT_FOUND)
-        except ValueError as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            print(f"Failed to find book with ID: {book_id}")
+            return Response(
+                {"error": f"Book not found with ID: {book_id}"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            print(f"Unexpected error: {str(e)}")
+            return Response(
+                {"error": str(e)}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 class ReturnBookView(generics.UpdateAPIView):
     """
