@@ -29,6 +29,7 @@ class Book(models.Model):
     author = models.CharField(max_length=255)
     isbn = models.CharField(max_length=13, unique=True)
     publish_date = models.DateField()
+    genre = models.CharField(max_length=255, null=True)
     total_copies = models.PositiveIntegerField()
     available_copies = models.PositiveIntegerField()
     status = models.CharField(
